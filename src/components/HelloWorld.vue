@@ -15,8 +15,7 @@
           </tr>
         </thead>
         <tbody>
-  
-          <tr v-for="user in orderedUsers" :key="user.id" id="list">
+          <tr v-for="user in users" :key="user.id" id="list">
             <td> <span>{{user.id}}</span></td>
             <td> <span>{{user.name}}</span></td>
             <td> <span>{{user.email}}</span> </td>
@@ -24,7 +23,6 @@
             <td><a href="#" @click="deleteItem(user)">Delete</a>
               <a href="#" @click="edit(user)" v-b-modal.modalPrevent>Edit</a></td>
           </tr>
-  
         </tbody>
       </table>
   
@@ -32,8 +30,6 @@
     <!-- Modal Component -->
     <b-modal id="modalPrevent" ref="modal" title="Submit your Detail" @ok="handleOk" @shown="clearName">
       <form @submit.stop.prevent="handleSubmit">
-  
-  
         <b-form-input class="input" type="text" placeholder="Enter your Name" v-model="user.name"></b-form-input>
         <b-form-input class="input" type="email" placeholder="Enter your Email" v-model="user.email"></b-form-input>
         <b-form-input class="input" type="date" placeholder="Enter your DOB" v-model="user.dob"></b-form-input>
@@ -44,13 +40,12 @@
         </b-form-checkbox>
       </form>
     </b-modal>
-
   </div>
 </template>
 
 <script>
-export default {
-  name: "HelloWorld",
+  export default {
+    name: "HelloWorld",
     data() {
       return {
         users: [],
@@ -66,12 +61,15 @@ export default {
         isEdit: false,
         sortKey: "",
         sortSettings: [{
-          email: true
-        }, {
-          name: true
-        }, {
-          dob: true
-        }],
+            email: true
+          },
+          {
+            name: true
+          },
+          {
+            dob: true
+          }
+        ],
         desc: true
       };
     },
@@ -127,11 +125,8 @@ export default {
           for (var i = 0; i < this.users.length; i++) {
             if (this.users[i].id == this.user["id"]) {
               this.users[i] = this.user;
-
             }
           }
-          this.users = _.orderBy(this.users, this.sortKey, this.desc);
-          
         } else {
           this.users.push({
             id: ++this.userCount,
@@ -156,29 +151,32 @@ export default {
         this.users.splice(this.users.indexOf(user), 1);
       },
       edit: function(user) {
-     
         this.user = JSON.parse(JSON.stringify(user));
         this.isEdit = true;
-        
       },
       orderBy: function(sorKey) {
         this.sortKey = sorKey;
         this.sortSettings[sorKey] = !this.sortSettings[sorKey];
         this.desc = this.sortSettings[sorKey];
-        this.users = _.orderBy(this.users, this.sortKey, this.desc);
-      }
-    },
-    computed: {
-      orderedUsers: function() {
-        return _.orderBy(this.users, this.sortKey, this.desc);
+        this.users.sort((a, b) => {
+          if (this.desc) {
+            if (a[sorKey] > b[sorKey]) return -1;
+            if (a[sorKey] < b[sorKey]) return 1;
+            return 0;
+          } else {
+            if (a[sorKey] < b[sorKey]) return -1;
+            if (a[sorKey] > b[sorKey]) return 1;
+            return 0;
+          }
+        });
       }
     }
-};
+  };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-ul {
+  ul {
     list-style-type: none;
     padding: 0;
   }
@@ -196,15 +194,19 @@ ul {
   .input {
     margin-top: 10px;
   }
- 
-  table, th, td{
+  
+  table,
+  th,
+  td {
     border: 1px solid grey;
-  }  
-table{
-  margin: 0 auto;
-   border-collapse: collapse;
+  }
+  
+  table {
+    margin: 0 auto;
+    border-collapse: collapse;
     width: 50%;
     color: #586949;
     text-align: center;
-    font-size: 20px;}
+    font-size: 20px;
+  }
 </style>
