@@ -45,7 +45,7 @@
 
 <script>
   export default {
-    name: "HelloWorld",
+    name: "Form",
     data() {
       return {
         users: [],
