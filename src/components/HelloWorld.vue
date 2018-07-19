@@ -6,10 +6,8 @@
       <!-- Modal Component -->
       <b-modal id="modalPrevent" ref="modal" title="Submit your Detail" @ok="handleOk">
         <form @submit.stop.prevent="handleSubmit">
-          <!-- <div class="form-group" :class="{'has-error': errors.has('name') }"> -->
           <b-form-input class="input" type="text" placeholder="Name" :maxlength="15" v-model="user.name"></b-form-input>
           <b-alert variant="danger" show v-if="!user.name && submitted">{{error_name}}</b-alert>
-          <!-- </div> -->
           <b-form-input class="input" type="email" placeholder="Enter your Email" max v-model="user.email"></b-form-input>
           <b-alert variant="danger" show v-if="(!user.email || emailRegErr) && submitted">{{error_message}}</b-alert>
           <b-form-input class="input" type="date" placeholder="Enter your DOB" icon="calendar-today" v-model="user.dob"></b-form-input>
@@ -22,7 +20,6 @@
           <b-form-checkbox id="checkbox1" value="accepted" v-model="status" unchecked-value="not_accepted">
             I accept the terms and policy
           </b-form-checkbox>
-          <!-- <b-alert variant="danger" show v-if="!user.status && submitted">Please accept our terms and conditions</b-alert> -->
         </form>
       </b-modal>
     </div>
