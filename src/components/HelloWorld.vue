@@ -6,10 +6,8 @@
       <!-- Modal Component -->
       <b-modal id="modalPrevent" ref="modal" title="Submit your Detail" @ok="handleOk">
         <form @submit.stop.prevent="handleSubmit">
-          <!-- <div class="form-group" :class="{'has-error': errors.has('name') }"> -->
           <b-form-input class="input" type="text" placeholder="Name" :maxlength="15" v-model="user.name"></b-form-input>
           <b-alert variant="danger" show v-if="!user.name && submitted">{{error_name}}</b-alert>
-          <!-- </div> -->
           <b-form-input class="input" type="email" placeholder="Enter your Email" max v-model="user.email"></b-form-input>
           <b-alert variant="danger" show v-if="(!user.email || emailRegErr) && submitted">{{error_message}}</b-alert>
           <b-form-input class="input" type="date" placeholder="Enter your DOB" icon="calendar-today" v-model="user.dob"></b-form-input>
@@ -22,63 +20,47 @@
           <b-form-checkbox id="checkbox1" value="accepted" v-model="status" unchecked-value="not_accepted">
             I accept the terms and policy
           </b-form-checkbox>
-          <!-- <b-alert variant="danger" show v-if="!user.status && submitted">Please accept our terms and conditions</b-alert> -->
         </form>
       </b-modal>
     </div>
-    <!--  Interface controls -->
-    <b-row>
-  
-      <b-col md="6" class="my-1">
-        <b-form-group horizontal label="Sort" class="mb-0">
-          <b-input-group>
-            <b-form-select v-model="sortBy" :options="sortOptions">
-              <option slot="first" :value="null">-- none --</option>
-            </b-form-select>
-            <b-form-select :disabled="!sortBy" v-model="sortDesc" slot="append">
-              <option :value="false">Asc</option>
-              <option :value="true">Desc</option>
-            </b-form-select>
-          </b-input-group>
-        </b-form-group>
-      </b-col>
-  
-      <b-col md="6" class="my-1">
-        <b-form-group horizontal label="Per page" class="mb-0">
-          <b-form-select :options="pageOptions" v-model="perPage" />
-        </b-form-group>
-      </b-col>
-    </b-row>
     <br/>
-  
-    <!-- Main table element -->
-    <b-table show-empty stacked="md" :items="users" :fields="fields" :current-page="currentPage" :per-page="perPage" :filter="filter" :sort-by.sync="sortBy" :sort-desc.sync="sortDesc" :sort-direction="sortDirection" @filtered="onFiltered">
-      <template slot="name" slot-scope="row">{{row.value}}
-</template>
-
-<template slot="email" slot-scope="row">
-   {{row.value}}
-</template>
-
-<template slot="dob" slot-scope="row">
-   {{row.value}}
-</template>
-
-<template slot="actions" slot-scope="row">
-  <!-- We use @click.stop here to prevent a 'row-clicked' event from also happening -->
-  <b-button size="sm" @click="deleteItem(user)" class="mr-1">
-    DELETE
-  </b-button>
-  <b-button size="sm" @click="edit(row)" v-b-modal.modalPrevent>
-    EDIT
-  </b-button>
-</template>
-    </b-table>
-    <b-row>
-      <b-col md="6" class="my-1">
-        <b-pagination :total-rows="totalRows" :per-page="perPage" v-model="currentPage" class="my-0" />
-      </b-col>
-    </b-row>    
+  <!-- table -->
+  <table class="table" striped hover :items="users">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col" >S. no</th>
+            <th scope="col" @click="orderBy('name')">Name</th>
+            <th scope="col" @click="orderBy('email')">Email</th>
+            <th scope="col" @click="orderBy('dob')">DOB</th>
+            <th scope="col" colspan="2">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in paginatedData" :key="user.id" id="list">
+            <td> <span>{{user.id}}</span></td>
+            <td> <span>{{user.name}}</span></td>
+            <td> <span>{{user.email}}</span> </td>
+            <td> <span>{{user.dob}}</span> </td>
+            <td><a href="#" @click="deleteItem(user)">Delete</a>
+              <a href="#" @click="edit(user)" v-b-modal.modalPrevent>Edit</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div>
+        <ul>
+          <li v-for="p in paginatedData"  >
+            {{p.first}} 
+            {{p.last}}  
+            {{p.suffix}}
+          </li>
+        </ul>
+        <button :disabled="pageNumber === 0" @click="prevPage">
+          Previous
+        </button>
+        <button :disabled="pageNumber >= pageCount -1" @click="nextPage">
+          Next
+      </button>
+      </div>  
   </b-container>
 </template>
 
@@ -99,73 +81,27 @@ export default {
       userCount: 0,
       submitted: false,
       status: false,
-      fields: [
+      sortKey: "",
+      sortSettings: [
         {
-          key: "name",
-          label: "Name",
-          sortable: true,
-          sortDirection: "desc"
+          email: true
         },
         {
-          key: "email",
-          label: "Email",
-          sortable: true
+          name: true
         },
         {
-          key: "dob",
-          label: "DOB",
-          sortable: true,
-          class: "text-center"
-        },
-        {
-          key: "actions",
-          label: "Actions"
+          dob: true
         }
       ],
       error_message: "",
       error_message2: "",
       emailRegErr: false,
-      currentPage: 1,
-      perPage: 5,
-      totalRows: users.length,
-      pageOptions: [5],
-      sortBy: null,
-      sortDesc: false,
-      sortDirection: "asc",
-      filter: null,
-      modalInfo: {
-        title: "",
-        content: ""
-      }
+      pageNumber: 0,
+      size: 5
     };
   },
 
-  computed: {
-    sortOptions() {
-      // Create an options list from our fields
-      return this.fields.filter(f => f.sortable).map(f => {
-        return {
-          text: f.label,
-          value: f.key
-        };
-      });
-    }
-  },
   methods: {
-    info(item, index, button) {
-      this.modalInfo.title = `Row index: ${index}`;
-      this.modalInfo.content = JSON.stringify(item, null, 2);
-      this.$root.$emit("bv::show::modal", "modalInfo", button);
-    },
-    resetModal() {
-      this.modalInfo.title = "";
-      this.modalInfo.content = "";
-    },
-    onFiltered(filteredItems) {
-      // Trigger pagination to update the number of buttons/pages due to filtering
-      this.totalRows = filteredItems.length;
-      this.currentPage = 1;
-    },
     handleOk(evt) {
       // Prevent modal from closing
       evt.preventDefault();
@@ -195,7 +131,7 @@ export default {
       }
       if (
         !this.user.email ||
-       !re.test(String(this.user.email).toLowerCase()) ||
+        !re.test(String(this.user.email).toLowerCase()) ||
         !this.user.name ||
         !this.user.dob ||
         !this.user.password ||
@@ -229,6 +165,7 @@ export default {
           password: this.user.password,
           con_password: this.user.con_password
         });
+        this.pageCount();
       }
       this.$refs.modal.hide();
       this.submitted = false;
@@ -244,8 +181,42 @@ export default {
       this.users.splice(this.users.indexOf(user), 1);
     },
     edit: function(user) {
-      this.user = user.item;
+      this.user = user;
       this.isEdit = true;
+    },
+    orderBy: function(sorKey) {
+      this.sortKey = sorKey;
+      this.sortSettings[sorKey] = !this.sortSettings[sorKey];
+      this.desc = this.sortSettings[sorKey];
+      this.users.sort((a, b) => {
+        if (this.desc) {
+          if (a[sorKey] > b[sorKey]) return -1;
+          if (a[sorKey] < b[sorKey]) return 1;
+          return 0;
+        } else {
+          if (a[sorKey] < b[sorKey]) return -1;
+          if (a[sorKey] > b[sorKey]) return 1;
+          return 0;
+        }
+      });
+    },
+    nextPage() {
+      this.pageNumber++;
+    },
+    prevPage() {
+      this.pageNumber--;
+    },
+    pageCount() {
+      let l = this.users.length,
+        s = this.size;
+      return Math.floor(l / s);      
+    }
+  },
+  computed: {
+    paginatedData() {
+      const start = this.pageNumber * this.size,
+        end = start + this.size;    
+      return this.users.slice(start, end);
     }
   }
 };
